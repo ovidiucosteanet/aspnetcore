@@ -58,6 +58,18 @@ internal class TestDiagnosticAnalyzerRunner : DiagnosticAnalyzerRunner
         return braceMatcher.FindBraces(model, token, caretPosition, CancellationToken.None);
     }
 
+    public async Task<List<AspNetCoreHighlightSpan>> GetHighlightingAsync(int caretPosition, params string[] sources)
+    {
+        var project = CreateProjectWithReferencesInBinDir(GetType().Assembly, sources);
+        var doc = project.Solution.GetDocument(project.Documents.First().Id);
+
+        var (_, token, model) = await RouteStringSyntaxDetector.TryGetTreeAndTokenAtPositionAsync(doc, caretPosition, CancellationToken.None);
+        var highlighter = new RoutePatternHighlighter();
+
+        var highlights = highlighter.GetDocumentHighlights(model, token, caretPosition, CancellationToken.None);
+        return highlights.SelectMany(h => h.HighlightSpans).ToList();
+    }
+
     public Task<Diagnostic[]> GetDiagnosticsAsync(params string[] sources)
     {
         var project = CreateProjectWithReferencesInBinDir(GetType().Assembly, sources);
