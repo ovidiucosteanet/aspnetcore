@@ -49,6 +49,8 @@ internal class RoutePatternHighlighter : IAspNetCoreEmbeddedLanguageDocumentHigh
         }
 
         var highlightSpans = new List<AspNetCoreHighlightSpan>();
+
+        // Highlight the parameter in the route string, e.g. "{id}" highlights "id".
         highlightSpans.Add(new AspNetCoreHighlightSpan(node.GetSpan(), AspNetCoreHighlightSpanKind.Reference));
 
         var (method, _) = EndpointMethodDetector.FindEndpointMethod(syntaxToken, semanticModel, cancellationToken);
@@ -62,12 +64,16 @@ internal class RoutePatternHighlighter : IAspNetCoreEmbeddedLanguageDocumentHigh
                 _ => throw new InvalidOperationException("Unexpected symbol type: " + method)
             };
 
+            // Match route parameter to method parameter. Parameters in a route aren't case sensitive.
+            // First attempt an exact match, then a case insensitive match.
             var parameterName = node.ParameterNameToken.Value.ToString();
             var matchingParameter = childSymbols.FirstOrDefault(s => s.Name == parameterName)
                 ?? childSymbols.FirstOrDefault(s => string.Equals(s.Name, parameterName, StringComparison.OrdinalIgnoreCase));
 
             if (matchingParameter != null)
             {
+                // Highlight parameter in method signature.
+                // e.g. "{id}" in route highlights id in "void Foo(string id) {}"
                 foreach (var item in matchingParameter.DeclaringSyntaxReferences)
                 {
                     var syntaxNode = item.GetSyntax(cancellationToken);
@@ -77,18 +83,25 @@ internal class RoutePatternHighlighter : IAspNetCoreEmbeddedLanguageDocumentHigh
                     }
                 }
 
+                // Highlight parameter references inside method.
+                // e.g. "{id}" in route highlights id in "_repository.GetBy(id)"
                 foreach (var item in method.DeclaringSyntaxReferences)
                 {
                     var methodSyntax = item.GetSyntax(cancellationToken);
 
+                    // Have to call GetSymbolInfo because it's easy to have identifiers with the same name
+                    // that reference a different API. For example, a type with the same name as parameter.
+                    // GetSymbolInfo can be slow. To reduce calls to it we only get IdentifierNameSyntax
+                    // nodes, filter them by name first, then check GetSymbolInfo. 
                     var parameterReferences = methodSyntax
                         .DescendantNodes()
                         .OfType<IdentifierNameSyntax>()
                         .Where(i => i.Identifier.Text == matchingParameter.Name)
-                        .Where(i => SymbolEqualityComparer.Default.Equals(semanticModel.GetSymbolInfo(i).Symbol, matchingParameter));
+                        .Where(i => semanticModel.GetSymbolInfo(i) is var symbolInfo && SymbolEqualityComparer.Default.Equals(symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault(), matchingParameter));
+
                     foreach (var reference in parameterReferences)
                     {
-                        highlightSpans.Add(new AspNetCoreHighlightSpan(reference.Identifier.Span, AspNetCoreHighlightSpanKind.Definition));
+                        highlightSpans.Add(new AspNetCoreHighlightSpan(reference.Identifier.Span, AspNetCoreHighlightSpanKind.Reference));
                     }
                 }
             }

@@ -161,7 +161,7 @@ class Program
     }
 
     [Fact]
-    public async Task InParameterName_MatchingAction_NoHighlight()
+    public async Task InParameterName_MatchingAction_HighlightParameter()
     {
         // Arrange & Act & Assert
         await TestHighlightingAsync(@"
@@ -183,6 +183,36 @@ public class TestController
     public object TestAction(int [|id|])
     {
         return null;
+    }
+}
+");
+    }
+
+    [Fact]
+    public async Task InParameterName_MatchingDelegateWithConflictingIdentifer_DontHighlightConflict()
+    {
+        // Arrange & Act & Assert
+        await TestHighlightingAsync(@"
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Builder;
+
+class Program
+{
+    static void Main()
+    {
+        EndpointRouteBuilderExtensions.MapGet(null, @""{$$[|id|]}"", ExecuteGet);
+    }
+
+    static string ExecuteGet(string [|id|])
+    {
+        [|id|] = TestEnum.id.ToString();
+        return $""{[|id|]}"";
+    }
+
+    enum TestEnum
+    {
+        id;
     }
 }
 ");
