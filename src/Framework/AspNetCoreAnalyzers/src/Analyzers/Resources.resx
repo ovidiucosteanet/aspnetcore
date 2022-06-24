@@ -171,4 +171,16 @@
   <data name="Route_issue_0" xml:space="preserve">
     <value>Route issue: {0}</value>
   </data>
+  <data name="AttributeRoute_TokenReplacement_EmptyTokenNotAllowed" xml:space="preserve">
+    <value>An empty replacement token ('[]') is not allowed.</value>
+  </data>
+  <data name="AttributeRoute_TokenReplacement_ImbalancedSquareBrackets" xml:space="preserve">
+    <value>Token delimiters ('[', ']') are imbalanced.</value>
+  </data>
+  <data name="AttributeRoute_TokenReplacement_UnclosedToken" xml:space="preserve">
+    <value>A replacement token is not closed.</value>
+  </data>
+  <data name="AttributeRoute_TokenReplacement_UnescapedBraceInToken" xml:space="preserve">
+    <value>An unescaped '[' token is not allowed inside of a replacement token. Use '[[' to escape.</value>
+  </data>
 </root>

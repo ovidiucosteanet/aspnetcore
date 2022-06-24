@@ -93,17 +93,27 @@ public class RoutePatternCompletionProvider : CompletionProvider
         }
 
         var position = context.Position;
-        var (tree, stringToken, semanticModel) = await RouteStringSyntaxDetector.TryGetTreeAndTokenAtPositionAsync(
+        var (success, stringToken, semanticModel) = await RouteStringSyntaxDetector.TryGetStringSyntaxTokenAtPositionAsync(
             context.Document, position, context.CancellationToken).ConfigureAwait(false);
 
-        if (tree == null ||
+        if (!success ||
             position <= stringToken.SpanStart ||
             position >= stringToken.Span.End)
         {
             return;
         }
 
-        var routePatternCompletionContext = new EmbeddedCompletionContext(context, tree, stringToken, semanticModel);
+        var (methodSymbol, isMinimal, isMvcAttribute) = RoutePatternUsageDetector.BuildContext(stringToken, semanticModel, context.CancellationToken);
+
+        var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(stringToken);
+        var tree = RoutePatternParser.TryParse(virtualChars, supportTokenReplacement: isMvcAttribute);
+        if (tree == null)
+        {
+            return;
+        }
+
+        var routePatternCompletionContext = new EmbeddedCompletionContext(
+            context, tree, stringToken, semanticModel, methodSymbol, isMinimal, isMvcAttribute);
         ProvideCompletions(routePatternCompletionContext);
 
         if (routePatternCompletionContext.Items.Count == 0)
@@ -199,10 +209,9 @@ public class RoutePatternCompletionProvider : CompletionProvider
 
     private void ProvideParameterCompletions(EmbeddedCompletionContext context)
     {
-        var (method, _) = EndpointMethodDetector.FindEndpointMethod(context.StringToken, context.SemanticModel, context.CancellationToken);
-        if (method != null)
+        if (context.MethodSymbol != null)
         {
-            var resolvedParameterSymbols = ResolvedParameters(method, context.SemanticModel);
+            var resolvedParameterSymbols = ResolvedParameters(context.MethodSymbol, context.SemanticModel);
             foreach (var parameterSymbol in resolvedParameterSymbols)
             {
                 context.AddIfMissing(parameterSymbol.Name, suffix: null, description: null, WellKnownTags.Parameter, parentOpt: null);
@@ -401,6 +410,9 @@ If there are two arguments then the string length must be greater than, or equal
         public readonly RoutePatternTree Tree;
         public readonly SyntaxToken StringToken;
         public readonly SemanticModel SemanticModel;
+        public readonly IMethodSymbol? MethodSymbol;
+        public readonly bool IsMinimal;
+        public readonly bool IsMvcAttribute;
         public readonly CancellationToken CancellationToken;
         public readonly int Position;
         public readonly CompletionTrigger Trigger;
@@ -410,12 +422,18 @@ If there are two arguments then the string length must be greater than, or equal
             CompletionContext context,
             RoutePatternTree tree,
             SyntaxToken stringToken,
-            SemanticModel semanticModel)
+            SemanticModel semanticModel,
+            IMethodSymbol? methodSymbol,
+            bool isMinimal,
+            bool isMvcAttribute)
         {
             _context = context;
             Tree = tree;
             StringToken = stringToken;
             SemanticModel = semanticModel;
+            MethodSymbol = methodSymbol;
+            IsMinimal = isMinimal;
+            IsMvcAttribute = isMvcAttribute;
             Position = _context.Position;
             Trigger = _context.Trigger;
             CancellationToken = _context.CancellationToken;

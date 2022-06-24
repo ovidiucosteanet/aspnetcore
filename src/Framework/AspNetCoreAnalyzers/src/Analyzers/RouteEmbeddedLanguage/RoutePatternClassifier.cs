@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.ExternalAccess.AspNetCore.EmbeddedLanguages;
 using Microsoft.CodeAnalysis.Classification;
 using RoutePatternToken = Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure.EmbeddedSyntaxToken<Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.RoutePattern.RoutePatternKind>;
 using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.RoutePattern;
+using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
 
 namespace Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage;
 
@@ -15,8 +16,10 @@ internal class RoutePatternClassifier : IAspNetCoreEmbeddedLanguageClassifier
 {
     public void RegisterClassifications(AspNetCoreEmbeddedLanguageClassificationContext context)
     {
+        var usageContext = RoutePatternUsageDetector.BuildContext(context.SyntaxToken, context.SemanticModel, context.CancellationToken);
+
         var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(context.SyntaxToken);
-        var tree = RoutePatternParser.TryParse(virtualChars);
+        var tree = RoutePatternParser.TryParse(virtualChars, supportTokenReplacement: usageContext.IsMvcAttribute);
 
         if (tree != null)
         {
@@ -59,7 +62,9 @@ internal class RoutePatternClassifier : IAspNetCoreEmbeddedLanguageClassifier
 
         public void Visit(RoutePatternReplacementNode node)
         {
-            // Nothing to highlight.
+            AddClassification(node.OpenBracketToken, ClassificationTypeNames.RegexCharacterClass);
+            AddClassification(node.TextToken, ClassificationTypeNames.RegexCharacterClass);
+            AddClassification(node.CloseBracketToken, ClassificationTypeNames.RegexCharacterClass);
         }
 
         public void Visit(RoutePatternParameterNode node)

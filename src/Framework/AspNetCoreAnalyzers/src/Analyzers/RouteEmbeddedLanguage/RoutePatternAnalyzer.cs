@@ -50,13 +50,10 @@ public class RoutePatternAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(token);
-                if (virtualChars.IsDefault())
-                {
-                    continue;
-                }
+                var usageContext = RoutePatternUsageDetector.BuildContext(token, context.SemanticModel, cancellationToken);
 
-                var tree = RoutePatternParser.TryParse(virtualChars);
+                var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(token);
+                var tree = RoutePatternParser.TryParse(virtualChars, supportTokenReplacement: usageContext.IsMvcAttribute);
                 if (tree == null)
                 {
                     continue;

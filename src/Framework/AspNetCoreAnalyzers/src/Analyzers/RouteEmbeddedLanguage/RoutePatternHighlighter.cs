@@ -23,18 +23,20 @@ internal class RoutePatternHighlighter : IAspNetCoreEmbeddedLanguageDocumentHigh
     public ImmutableArray<AspNetCoreDocumentHighlights> GetDocumentHighlights(
         SemanticModel semanticModel, SyntaxToken token, int position, CancellationToken cancellationToken)
     {
+        var usageContext = RoutePatternUsageDetector.BuildContext(token, semanticModel, cancellationToken);
+
         var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(token);
-        var tree = RoutePatternParser.TryParse(virtualChars);
+        var tree = RoutePatternParser.TryParse(virtualChars, supportTokenReplacement: usageContext.IsMvcAttribute);
         if (tree == null)
         {
             return ImmutableArray<AspNetCoreDocumentHighlights>.Empty;
         }
 
-        return GetHighlights(tree, semanticModel, token, position, cancellationToken);
+        return GetHighlights(tree, semanticModel, position, usageContext.MethodSymbol, cancellationToken);
     }
 
     private static ImmutableArray<AspNetCoreDocumentHighlights> GetHighlights(
-        RoutePatternTree tree, SemanticModel semanticModel, SyntaxToken syntaxToken, int position, CancellationToken cancellationToken)
+        RoutePatternTree tree, SemanticModel semanticModel, int position, IMethodSymbol mvcMethodSymbol, CancellationToken cancellationToken)
     {
         var virtualChar = tree.Text.Find(position);
         if (virtualChar == null)
@@ -53,15 +55,14 @@ internal class RoutePatternHighlighter : IAspNetCoreEmbeddedLanguageDocumentHigh
         // Highlight the parameter in the route string, e.g. "{id}" highlights "id".
         highlightSpans.Add(new AspNetCoreHighlightSpan(node.GetSpan(), AspNetCoreHighlightSpanKind.Reference));
 
-        var (method, _) = EndpointMethodDetector.FindEndpointMethod(syntaxToken, semanticModel, cancellationToken);
-        if (method != null)
+        if (mvcMethodSymbol != null)
         {
             var resolvedParameterSymbols = new List<ISymbol>();
-            var childSymbols = method switch
+            var childSymbols = mvcMethodSymbol switch
             {
                 ITypeSymbol typeSymbol => typeSymbol.GetMembers().OfType<IPropertySymbol>().ToImmutableArray().As<ISymbol>(),
                 IMethodSymbol methodSymbol => methodSymbol.Parameters.As<ISymbol>(),
-                _ => throw new InvalidOperationException("Unexpected symbol type: " + method)
+                _ => throw new InvalidOperationException("Unexpected symbol type: " + mvcMethodSymbol)
             };
 
             // Match route parameter to method parameter. Parameters in a route aren't case sensitive.
@@ -85,7 +86,7 @@ internal class RoutePatternHighlighter : IAspNetCoreEmbeddedLanguageDocumentHigh
 
                 // Highlight parameter references inside method.
                 // e.g. "{id}" in route highlights id in "_repository.GetBy(id)"
-                foreach (var item in method.DeclaringSyntaxReferences)
+                foreach (var item in mvcMethodSymbol.DeclaringSyntaxReferences)
                 {
                     var methodSyntax = item.GetSyntax(cancellationToken);
 

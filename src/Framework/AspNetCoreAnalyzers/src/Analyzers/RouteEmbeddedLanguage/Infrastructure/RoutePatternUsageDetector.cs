@@ -10,9 +10,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
 
-internal static class EndpointMethodDetector
+internal record struct RoutePatternUsageContext(
+    IMethodSymbol? MethodSymbol,
+    bool IsMinimal,
+    bool IsMvcAttribute);
+
+internal static class RoutePatternUsageDetector
 {
-    public static (IMethodSymbol? Symbol, bool IsMinimal) FindEndpointMethod(SyntaxToken token, SemanticModel semanticModel, CancellationToken cancellationToken)
+    public static RoutePatternUsageContext BuildContext(SyntaxToken token, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
         if (token.Parent is not LiteralExpressionSyntax)
         {
@@ -28,18 +33,38 @@ internal static class EndpointMethodDetector
         if (container.Parent.IsKind(SyntaxKind.Argument))
         {
             // We're an argument in a method call. See if we're a MapXXX method.
-            return (FindMapMethod(semanticModel, container, cancellationToken), true);
+            var mapMethodSymbol = FindMapMethod(semanticModel, container, cancellationToken);
+            if (mapMethodSymbol == null)
+            {
+                return default;
+            }    
+            return new(mapMethodSymbol, true, false);
         }
         else if (container.Parent.IsKind(SyntaxKind.AttributeArgument))
         {
             // We're an argument in an attribute. See if attribute is on a controller method.
-            return (FindMvcMethod(semanticModel, container, cancellationToken), false);
+            var attributeParent = FindAttributeParent(container);
+            if (attributeParent is MethodDeclarationSyntax methodDeclarationSyntax)
+            {
+                var actionMethodSymbol = FindMvcMethod(semanticModel, methodDeclarationSyntax, cancellationToken);
+                if (actionMethodSymbol == null)
+                {
+                    return default;
+                }
+                return new(actionMethodSymbol, false, true);
+            }
+            else if (attributeParent is ClassDeclarationSyntax classDeclarationSyntax)
+            {
+                var classSymbol = semanticModel.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken);
+
+                return new(null, false, MvcDetector.IsController(classSymbol, semanticModel));
+            }
         }
 
         return default;
     }
 
-    private static IMethodSymbol? FindMvcMethod(SemanticModel semanticModel, SyntaxNode container, CancellationToken cancellationToken)
+    private static SyntaxNode? FindAttributeParent(SyntaxNode container)
     {
         var argument = container.Parent;
         if (argument.Parent is not AttributeArgumentListSyntax argumentList)
@@ -57,11 +82,11 @@ internal static class EndpointMethodDetector
             return null;
         }
 
-        if (attributeList.Parent is not MethodDeclarationSyntax methodDeclaration)
-        {
-            return null;
-        }
+        return attributeList.Parent;
+    }
 
+    private static IMethodSymbol? FindMvcMethod(SemanticModel semanticModel, MethodDeclarationSyntax methodDeclaration, CancellationToken cancellationToken)
+    {
         var methodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration, cancellationToken);
 
         if (methodSymbol.ContainingType is not ITypeSymbol typeSymbol)

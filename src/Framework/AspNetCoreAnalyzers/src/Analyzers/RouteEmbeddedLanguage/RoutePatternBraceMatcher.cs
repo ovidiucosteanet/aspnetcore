@@ -17,8 +17,10 @@ internal class RoutePatternBraceMatcher : IAspNetCoreEmbeddedLanguageBraceMatche
 {
     public AspNetCoreBraceMatchingResult? FindBraces(SemanticModel semanticModel, SyntaxToken token, int position, CancellationToken cancellationToken)
     {
+        var usageContext = RoutePatternUsageDetector.BuildContext(token, semanticModel, cancellationToken);
+
         var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(token);
-        var tree = RoutePatternParser.TryParse(virtualChars);
+        var tree = RoutePatternParser.TryParse(virtualChars, supportTokenReplacement: usageContext.IsMvcAttribute);
         if (tree == null)
         {
             return null;
@@ -40,6 +42,7 @@ internal class RoutePatternBraceMatcher : IAspNetCoreEmbeddedLanguageBraceMatche
         {
             '{' or '}' => FindParameterBraces(tree, ch),
             '(' or ')' => FindPolicyParens(tree, ch),
+            '[' or ']' => FindReplacementTokenBrackets(tree, ch),
             _ => null,
         };
     }
@@ -56,6 +59,12 @@ internal class RoutePatternBraceMatcher : IAspNetCoreEmbeddedLanguageBraceMatche
         return node == null ? null : CreateResult(node.OpenParenToken, node.CloseParenToken);
     }
 
+    private static AspNetCoreBraceMatchingResult? FindReplacementTokenBrackets(RoutePatternTree tree, AspNetCoreVirtualChar ch)
+    {
+        var node = FindReplacementNode(tree.Root, ch);
+        return node == null ? null : CreateResult(node.OpenBracketToken, node.CloseBracketToken);
+    }
+
     private static RoutePatternParameterNode? FindParameterNode(RoutePatternNode node, AspNetCoreVirtualChar ch)
         => FindNode<RoutePatternParameterNode>(node, ch, (parameter, c) =>
                 parameter.OpenBraceToken.VirtualChars.Contains(c) || parameter.CloseBraceToken.VirtualChars.Contains(c));
@@ -63,6 +72,10 @@ internal class RoutePatternBraceMatcher : IAspNetCoreEmbeddedLanguageBraceMatche
     private static RoutePatternPolicyFragmentEscapedNode? FindPolicyFragmentEscapedNode(RoutePatternNode node, AspNetCoreVirtualChar ch)
         => FindNode<RoutePatternPolicyFragmentEscapedNode>(node, ch, (fragment, c) =>
                 fragment.OpenParenToken.VirtualChars.Contains(c) || fragment.CloseParenToken.VirtualChars.Contains(c));
+
+    private static RoutePatternReplacementNode? FindReplacementNode(RoutePatternNode node, AspNetCoreVirtualChar ch)
+        => FindNode<RoutePatternReplacementNode>(node, ch, (fragment, c) =>
+                fragment.OpenBracketToken.VirtualChars.Contains(c) || fragment.CloseBracketToken.VirtualChars.Contains(c));
 
     private static TNode? FindNode<TNode>(RoutePatternNode node, AspNetCoreVirtualChar ch, Func<TNode, AspNetCoreVirtualChar, bool> predicate)
         where TNode : RoutePatternNode

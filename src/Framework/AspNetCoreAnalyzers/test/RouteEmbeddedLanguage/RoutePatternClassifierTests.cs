@@ -64,4 +64,72 @@ Parameter("id"),
 Regex.Anchor("?"),
 Regex.CharacterClass("}"));
     }
+
+    [Fact]
+    public async Task AttributeOnField_TokenReplacementText_TokenReplacementNotClassified()
+    {
+        await TestAsync(
+@"
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
+
+class Program
+{
+    [StringSyntax(""Route"")]
+    private string field;
+
+    void Goo()
+    {
+        this.field = [|@""[one]/{id}""|];
+    }
+}",
+Verbatim(@"@""[one]/{id}"""),
+Regex.CharacterClass("{"),
+Parameter("id"),
+Regex.CharacterClass("}"));
+    }
+
+    [Fact]
+    public async Task AttributeOnAction_TokenReplacementText_TokenReplacementClassified()
+    {
+        await TestAsync(
+@"
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
+
+public class TestController
+{
+    [HttpGet([|@""[one]""|])]
+    public void TestAction()
+    {
+    }
+}",
+Verbatim(@"@""[one]"""),
+Regex.CharacterClass("["),
+Regex.CharacterClass("one"),
+Regex.CharacterClass("]"));
+    }
+
+    [Fact]
+    public async Task AttributeOnController_TokenReplacementText_TokenReplacementClassified()
+    {
+        await TestAsync(
+@"
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
+
+[Route([|@""[one]""|])]
+public class TestController
+{
+    public void TestAction()
+    {
+    }
+}",
+Verbatim(@"@""[one]"""),
+Regex.CharacterClass("["),
+Regex.CharacterClass("one"),
+Regex.CharacterClass("]"));
+    }
 }

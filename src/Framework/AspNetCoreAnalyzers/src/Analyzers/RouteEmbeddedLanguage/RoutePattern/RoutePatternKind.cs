@@ -41,6 +41,7 @@ internal enum RoutePatternKind
     DotToken,
     EqualsToken,
     ColonToken,
+    ReplacementToken,
     AsteriskToken,
     /// <summary>
     /// (

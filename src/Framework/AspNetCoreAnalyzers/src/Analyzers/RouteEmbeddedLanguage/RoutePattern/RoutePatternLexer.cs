@@ -17,10 +17,14 @@ using RoutePatternToken = EmbeddedSyntaxToken<RoutePatternKind>;
 internal struct RoutePatternLexer
 {
     public readonly AspNetCoreVirtualCharSequence Text;
+    public readonly bool SupportTokenReplacement;
     public int Position;
 
-    public RoutePatternLexer(AspNetCoreVirtualCharSequence text) : this()
-        => Text = text;
+    public RoutePatternLexer(AspNetCoreVirtualCharSequence text, bool supportTokenReplacement) : this()
+    {
+        Text = text;
+        SupportTokenReplacement = supportTokenReplacement;
+    }
 
     public AspNetCoreVirtualChar CurrentChar => Position < Text.Length ? Text[Position] : default;
 
@@ -92,7 +96,8 @@ internal struct RoutePatternLexer
 
         var start = Position;
 
-        int? mismatchPosition = null;
+        int? mismatchBracePosition = null;
+        int? mismatchBracketPosition = null;
         int? questionMarkPosition = null;
         while (Position < Text.Length)
         {
@@ -111,11 +116,20 @@ internal struct RoutePatternLexer
             else if (ch.Value == '}' && IsUnescapedChar(ref Position, '}'))
             {
                 // An unescaped brace is invalid.
-                mismatchPosition = Position;
+                mismatchBracePosition = Position;
             }
             else if (ch.Value == '?')
             {
                 questionMarkPosition = Position;
+            }
+            else if (ch.Value == '[' && IsUnescapedChar(ref Position, '[') && SupportTokenReplacement)
+            {
+                // Literal ends at bracket start if token replacement is supported.
+                break;
+            }
+            else if (IsUnescapedChar(ref Position, ']') && SupportTokenReplacement)
+            {
+                mismatchBracketPosition = Position;
             }
 
             Position++;
@@ -130,10 +144,16 @@ internal struct RoutePatternLexer
         token = token.With(value: token.VirtualChars.CreateString());
 
         // It's fine that this only warns about the first invalid close brace.
-        if (mismatchPosition != null)
+        if (mismatchBracePosition != null)
         {
             token = token.AddDiagnosticIfNone(new EmbeddedDiagnostic(
                 Resources.TemplateRoute_MismatchedParameter,
+                token.GetSpan()));
+        }
+        if (mismatchBracketPosition != null)
+        {
+            token = token.AddDiagnosticIfNone(new EmbeddedDiagnostic(
+                Resources.AttributeRoute_TokenReplacement_ImbalancedSquareBrackets,
                 token.GetSpan()));
         }
         if (questionMarkPosition != null)
@@ -306,6 +326,30 @@ internal struct RoutePatternLexer
         return false;
     }
 
+    internal bool IsUnescapedCharLookahead(ref int position, char c)
+    {
+        var currentPosition = position;
+        while (currentPosition < Text.Length && Text[currentPosition].Value == c)
+        {
+            currentPosition++;
+        }
+
+        // The char is unescaped if there is an odd number, e.g.
+        // [ == unescaped
+        // [[ == escaped
+        // [[[ = unescaped, etc
+        if ((currentPosition - position) % 2 == 1)
+        {
+            return true;
+        }
+        // If escaped chars encountered then skip to the end.
+        if (currentPosition > position)
+        {
+            position = currentPosition - 1;
+        }
+        return false;
+    }
+
     internal RoutePatternToken? TryScanEscapedPolicyFragment()
     {
         if (Position == Text.Length)
@@ -352,6 +396,49 @@ internal struct RoutePatternLexer
         {
             token = token.AddDiagnosticIfNone(
                 new EmbeddedDiagnostic(Resources.TemplateRoute_UnescapedBrace, token.GetSpan()));
+        }
+        return token;
+    }
+
+    internal RoutePatternToken? TryScanReplacementToken()
+    {
+        if (Position == Text.Length)
+        {
+            return null;
+        }
+
+        var start = Position;
+        var hasUnescapedOpenBracket = false;
+        while (Position < Text.Length)
+        {
+            var ch = Text[Position];
+
+            if (ch.Value == '[' && IsUnescapedChar(ref Position, '['))
+            {
+                hasUnescapedOpenBracket = true;
+            }
+            else if (IsUnescapedCharLookahead(ref Position, ']'))
+            {
+                // Note that a replacement token ends at the start of a sequence of escapes.
+                // ends here -> ]]]
+                break;
+            }
+
+            Position++;
+        }
+
+        if (Position == start)
+        {
+            return null;
+        }
+
+        // This token could end with an unclosed parameter.
+        var token = CreateToken(RoutePatternKind.ReplacementToken, GetSubPatternToCurrentPos(start));
+        token = token.With(value: token.VirtualChars.CreateString());
+        if (hasUnescapedOpenBracket)
+        {
+            token = token.AddDiagnosticIfNone(
+                new EmbeddedDiagnostic(Resources.AttributeRoute_TokenReplacement_UnescapedBraceInToken, token.GetSpan()));
         }
         return token;
     }

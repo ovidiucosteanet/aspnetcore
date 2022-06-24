@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.IO;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
 using Microsoft.CodeAnalysis.ExternalAccess.AspNetCore.EmbeddedLanguages;
@@ -19,13 +20,15 @@ internal partial struct RoutePatternParser
 {
     private RoutePatternLexer _lexer;
     private RoutePatternToken _currentToken;
+    private readonly bool _supportTokenReplacement;
 
-    private RoutePatternParser(AspNetCoreVirtualCharSequence text) : this()
+    private RoutePatternParser(AspNetCoreVirtualCharSequence text, bool supportTokenReplacement) : this()
     {
-        _lexer = new RoutePatternLexer(text);
+        _lexer = new RoutePatternLexer(text, supportTokenReplacement);
 
         // Get the first token.  It is allowed to have trivia on it.
         ConsumeCurrentToken();
+        _supportTokenReplacement = supportTokenReplacement;
     }
 
     /// <summary>
@@ -44,9 +47,14 @@ internal partial struct RoutePatternParser
     /// and list of diagnostics.  Parsing should always succeed, except in the case of the stack 
     /// overflowing.
     /// </summary>
-    public static RoutePatternTree? TryParse(AspNetCoreVirtualCharSequence text)
+    public static RoutePatternTree? TryParse(AspNetCoreVirtualCharSequence text, bool supportTokenReplacement)
     {
-        var parser = new RoutePatternParser(text);
+        if (text.IsDefault())
+        {
+            return null;
+        }
+
+        var parser = new RoutePatternParser(text, supportTokenReplacement);
         return parser.ParseTree();
     }
 
@@ -385,6 +393,21 @@ internal partial struct RoutePatternParser
                 MoveBackBeforePreviousScan();
             }
         }
+        else if (_currentToken.Kind == RoutePatternKind.OpenBracketToken && _supportTokenReplacement)
+        {
+            var openBracketToken = _currentToken;
+
+            ConsumeCurrentToken();
+
+            if (_currentToken.Kind != RoutePatternKind.OpenBracketToken)
+            {
+                return ParseReplacement(openBracketToken);
+            }
+            else
+            {
+                MoveBackBeforePreviousScan();
+            }
+        }
 
         return ParseLiteral();
     }
@@ -410,10 +433,34 @@ internal partial struct RoutePatternParser
         }
     }
 
-    //private RoutePatternSegmentSeperatorNode ParseReplacement()
-    //{
-    //    throw new NotImplementedException();
-    //}
+    private RoutePatternReplacementNode ParseReplacement(RoutePatternToken openBracketToken)
+    {
+        Debug.Assert(_supportTokenReplacement);
+
+        MoveBackBeforePreviousScan();
+
+        var replacementToken = _lexer.TryScanReplacementToken();
+        if (replacementToken != null)
+        {
+            ConsumeCurrentToken();
+        }
+        else
+        {
+            replacementToken = CreateMissingToken(RoutePatternKind.ReplacementToken);
+            if (_currentToken.Kind != RoutePatternKind.EndOfFile)
+            {
+                ConsumeCurrentToken();
+
+                replacementToken = replacementToken.Value.AddDiagnosticIfNone(
+                    new EmbeddedDiagnostic(Resources.AttributeRoute_TokenReplacement_EmptyTokenNotAllowed, _currentToken.GetFullSpan().Value));
+            }
+        }
+
+        return new RoutePatternReplacementNode(
+            openBracketToken,
+            replacementToken.Value,
+            ConsumeToken(RoutePatternKind.CloseBracketToken, Resources.AttributeRoute_TokenReplacement_UnclosedToken));
+    }
 
     private RoutePatternParameterNode ParseParameter(RoutePatternToken openBraceToken)
     {

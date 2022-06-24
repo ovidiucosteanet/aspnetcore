@@ -52,7 +52,7 @@ internal class TestDiagnosticAnalyzerRunner : DiagnosticAnalyzerRunner
         var project = CreateProjectWithReferencesInBinDir(GetType().Assembly, sources);
         var doc = project.Solution.GetDocument(project.Documents.First().Id);
 
-        var (_, token, model) = await RouteStringSyntaxDetector.TryGetTreeAndTokenAtPositionAsync(doc, caretPosition, CancellationToken.None);
+        var (_, token, model) = await RouteStringSyntaxDetector.TryGetStringSyntaxTokenAtPositionAsync(doc, caretPosition, CancellationToken.None);
         var braceMatcher = new RoutePatternBraceMatcher();
 
         return braceMatcher.FindBraces(model, token, caretPosition, CancellationToken.None);
@@ -63,7 +63,7 @@ internal class TestDiagnosticAnalyzerRunner : DiagnosticAnalyzerRunner
         var project = CreateProjectWithReferencesInBinDir(GetType().Assembly, sources);
         var doc = project.Solution.GetDocument(project.Documents.First().Id);
 
-        var (_, token, model) = await RouteStringSyntaxDetector.TryGetTreeAndTokenAtPositionAsync(doc, caretPosition, CancellationToken.None);
+        var (_, token, model) = await RouteStringSyntaxDetector.TryGetStringSyntaxTokenAtPositionAsync(doc, caretPosition, CancellationToken.None);
         var highlighter = new RoutePatternHighlighter();
 
         var highlights = highlighter.GetDocumentHighlights(model, token, caretPosition, CancellationToken.None);

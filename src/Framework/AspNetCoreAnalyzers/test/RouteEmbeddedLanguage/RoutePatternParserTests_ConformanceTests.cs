@@ -18,7 +18,7 @@ public partial class RoutePatternParserTests
   <CompilationUnit>
     <Segment>
       <Literal>
-        <Literal value=""""cool"""">cool</Literal>
+        <Literal value=""cool"">cool</Literal>
       </Literal>
     </Segment>
     <EndOfFile />
@@ -36,7 +36,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p"""">p</ParameterNameToken>
+          <ParameterNameToken value=""p"">p</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -44,7 +44,7 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -58,7 +58,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p"""">p</ParameterNameToken>
+          <ParameterNameToken value=""p"">p</ParameterNameToken>
         </ParameterName>
         <Optional>
           <QuestionMarkToken>?</QuestionMarkToken>
@@ -69,7 +69,7 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p"""" IsCatchAll=""""false"""" IsOptional=""""true"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p"" IsCatchAll=""false"" IsOptional=""true"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -81,7 +81,7 @@ public partial class RoutePatternParserTests
   <CompilationUnit>
     <Segment>
       <Literal>
-        <Literal value=""""cool"""">cool</Literal>
+        <Literal value=""cool"">cool</Literal>
       </Literal>
     </Segment>
     <Seperator>
@@ -89,7 +89,7 @@ public partial class RoutePatternParserTests
     </Seperator>
     <Segment>
       <Literal>
-        <Literal value=""""awesome"""">awesome</Literal>
+        <Literal value=""awesome"">awesome</Literal>
       </Literal>
     </Segment>
     <Seperator>
@@ -97,7 +97,7 @@ public partial class RoutePatternParserTests
     </Seperator>
     <Segment>
       <Literal>
-        <Literal value=""""super"""">super</Literal>
+        <Literal value=""super"">super</Literal>
       </Literal>
     </Segment>
     <EndOfFile />
@@ -115,7 +115,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -127,7 +127,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -142,7 +142,7 @@ public partial class RoutePatternParserTests
           <AsteriskToken>*</AsteriskToken>
         </CatchAll>
         <ParameterName>
-          <ParameterNameToken value=""""p3"""">p3</ParameterNameToken>
+          <ParameterNameToken value=""p3"">p3</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -150,9 +150,9 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p3"""" IsCatchAll=""""true"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p3"" IsCatchAll=""true"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -164,12 +164,12 @@ public partial class RoutePatternParserTests
   <CompilationUnit>
     <Segment>
       <Literal>
-        <Literal value=""""cool-"""">cool-</Literal>
+        <Literal value=""cool-"">cool-</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -177,7 +177,7 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -191,18 +191,18 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""-cool"""">-cool</Literal>
+        <Literal value=""-cool"">-cool</Literal>
       </Literal>
     </Segment>
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -216,17 +216,17 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""-cool-"""">-cool-</Literal>
+        <Literal value=""-cool-"">-cool-</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -234,8 +234,8 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -247,23 +247,23 @@ public partial class RoutePatternParserTests
   <CompilationUnit>
     <Segment>
       <Literal>
-        <Literal value=""""cool-"""">cool-</Literal>
+        <Literal value=""cool-"">cool-</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""-awesome"""">-awesome</Literal>
+        <Literal value=""-awesome"">-awesome</Literal>
       </Literal>
     </Segment>
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -277,17 +277,17 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <Optional>
           <QuestionMarkToken>?</QuestionMarkToken>
@@ -298,8 +298,8 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""true"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""true"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -313,17 +313,17 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -331,8 +331,8 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -346,27 +346,27 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p3"""">p3</ParameterNameToken>
+          <ParameterNameToken value=""p3"">p3</ParameterNameToken>
         </ParameterName>
         <Optional>
           <QuestionMarkToken>?</QuestionMarkToken>
@@ -377,9 +377,9 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p3"""" IsCatchAll=""""false"""" IsOptional=""""true"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p3"" IsCatchAll=""false"" IsOptional=""true"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -393,27 +393,27 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p3"""">p3</ParameterNameToken>
+          <ParameterNameToken value=""p3"">p3</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -421,9 +421,9 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p3"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p3"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -437,17 +437,17 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <Optional>
           <QuestionMarkToken>?</QuestionMarkToken>
@@ -462,7 +462,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p3"""">p3</ParameterNameToken>
+          <ParameterNameToken value=""p3"">p3</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -470,9 +470,9 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""true"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p3"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""true"" EncodeSlashes=""true"" />
+    <Parameter Name=""p3"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -486,7 +486,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p1"""">p1</ParameterNameToken>
+          <ParameterNameToken value=""p1"">p1</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -498,17 +498,17 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p3"""">p3</ParameterNameToken>
+          <ParameterNameToken value=""p3"">p3</ParameterNameToken>
         </ParameterName>
         <Optional>
           <QuestionMarkToken>?</QuestionMarkToken>
@@ -519,9 +519,9 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p1"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p3"""" IsCatchAll=""""false"""" IsOptional=""""true"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p1"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p3"" IsCatchAll=""false"" IsOptional=""true"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }
@@ -535,7 +535,7 @@ public partial class RoutePatternParserTests
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p2"""">p2</ParameterNameToken>
+          <ParameterNameToken value=""p2"">p2</ParameterNameToken>
         </ParameterName>
         <CloseBraceToken>}</CloseBraceToken>
       </Parameter>
@@ -545,12 +545,12 @@ public partial class RoutePatternParserTests
     </Seperator>
     <Segment>
       <Literal>
-        <Literal value=""""."""">.</Literal>
+        <Literal value=""."">.</Literal>
       </Literal>
       <Parameter>
         <OpenBraceToken>{</OpenBraceToken>
         <ParameterName>
-          <ParameterNameToken value=""""p3"""">p3</ParameterNameToken>
+          <ParameterNameToken value=""p3"">p3</ParameterNameToken>
         </ParameterName>
         <Optional>
           <QuestionMarkToken>?</QuestionMarkToken>
@@ -561,8 +561,8 @@ public partial class RoutePatternParserTests
     <EndOfFile />
   </CompilationUnit>
   <Parameters>
-    <Parameter Name=""""p2"""" IsCatchAll=""""false"""" IsOptional=""""false"""" EncodeSlashes=""""true"""" />
-    <Parameter Name=""""p3"""" IsCatchAll=""""false"""" IsOptional=""""true"""" EncodeSlashes=""""true"""" />
+    <Parameter Name=""p2"" IsCatchAll=""false"" IsOptional=""false"" EncodeSlashes=""true"" />
+    <Parameter Name=""p3"" IsCatchAll=""false"" IsOptional=""true"" EncodeSlashes=""true"" />
   </Parameters>
 </Tree>");
     }

@@ -196,6 +196,67 @@ class Program
                 Assert.Same(DiagnosticDescriptors.RoutePatternIssue, d.Descriptor);
                 Assert.Equal($"Route issue: {Resources.TemplateRoute_InvalidRouteTemplate}", d.GetMessage(CultureInfo.InvariantCulture));
             });
-        ;
+    }
+
+    [Fact]
+    public async Task BadTokenReplacement_MethodArgument_MultipleResults()
+    {
+        // Arrange
+        var source = TestSource.Read(@"
+using System.Diagnostics.CodeAnalysis;
+
+class Program
+{
+    static void Main()
+    {
+        M(@""[hi"");
+    }
+
+    static void M([StringSyntax(""Route"")] string p)
+    {
+    }
+}
+");
+        // Act
+        var diagnostics = await Runner.GetDiagnosticsAsync(source.Source);
+
+        // Assert
+        Assert.Empty(diagnostics);
+    }
+
+    [Fact]
+    public async Task BadTokenReplacement_MvcAction_TokenReplacementDiagnostics()
+    {
+        // Arrange
+        var source = TestSource.Read(@"
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Mvc;
+
+class Program
+{
+    static void Main()
+    {
+    }
+}
+
+[Route(@""[hi"")]
+public class TestController
+{
+    public void TestAction()
+    {
+    }
+}
+");
+        // Act
+        var diagnostics = await Runner.GetDiagnosticsAsync(source.Source);
+
+        // Assert
+        Assert.Collection(
+            diagnostics,
+            d =>
+            {
+                Assert.Same(DiagnosticDescriptors.RoutePatternIssue, d.Descriptor);
+                Assert.Equal($"Route issue: {Resources.AttributeRoute_TokenReplacement_UnclosedToken}", d.GetMessage(CultureInfo.InvariantCulture));
+            });
     }
 }

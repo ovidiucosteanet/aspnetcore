@@ -65,14 +65,14 @@ internal sealed class RoutePatternSegmentNode : RoutePatternRootPartNode
 /// <summary>
 /// [controller]
 /// </summary>
-internal class RoutePatternReplacementNode : RoutePatternNode
+internal sealed class RoutePatternReplacementNode : RoutePatternSegmentPartNode
 {
-    protected RoutePatternReplacementNode(
+    public RoutePatternReplacementNode(
         RoutePatternToken openBracketToken, RoutePatternToken textToken, RoutePatternToken closeBracketToken)
         : base(RoutePatternKind.Replacement)
     {
         Debug.Assert(openBracketToken.Kind == RoutePatternKind.OpenBracketToken);
-        Debug.Assert(textToken.Kind == RoutePatternKind.TextToken);
+        Debug.Assert(textToken.Kind == RoutePatternKind.ReplacementToken);
         Debug.Assert(closeBracketToken.Kind == RoutePatternKind.CloseBracketToken);
         OpenBracketToken = openBracketToken;
         TextToken = textToken;
@@ -99,9 +99,9 @@ internal class RoutePatternReplacementNode : RoutePatternNode
 }
 
 /// <summary>
-/// [controller]
+/// {controller}
 /// </summary>
-internal class RoutePatternParameterNode : RoutePatternSegmentPartNode
+internal sealed class RoutePatternParameterNode : RoutePatternSegmentPartNode
 {
     public RoutePatternParameterNode(
         RoutePatternToken openBraceToken, ImmutableArray<RoutePatternParameterPartNode> parameterPartNodes, RoutePatternToken closeBraceToken)

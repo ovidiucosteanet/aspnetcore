@@ -16,7 +16,7 @@ namespace Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
 
 internal static class RouteStringSyntaxDetector
 {
-    internal static async ValueTask<(RoutePatternTree tree, SyntaxToken token, SemanticModel model)> TryGetTreeAndTokenAtPositionAsync(
+    internal static async ValueTask<(bool success, SyntaxToken token, SemanticModel? model)> TryGetStringSyntaxTokenAtPositionAsync(
         Document document, int position, CancellationToken cancellationToken)
     {
         var root = await GetSyntaxRootAsync(document, cancellationToken).ConfigureAwait(false);
@@ -37,19 +37,7 @@ internal static class RouteStringSyntaxDetector
             return default;
         }
 
-        var virtualChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(token);
-        if (virtualChars.IsDefault())
-        {
-            return default;
-        }
-
-        var tree = RoutePatternParser.TryParse(virtualChars);
-        if (tree == null)
-        {
-            return default;
-        }
-
-        return (tree, token, semanticModel);
+        return (true, token, semanticModel);
     }
 
     public static async ValueTask<SyntaxNode?> GetSyntaxRootAsync(Document document, CancellationToken cancellationToken)

@@ -24,6 +24,7 @@ using System.Reflection;
 using Xunit.Abstractions;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.RoutePattern;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage;
 
@@ -49,19 +50,25 @@ public partial class RoutePatternParserTests
         return token;
     }
 
-    private RoutePatternTree Test(string stringText, string expected = null,
+    private RoutePatternTree Test(
+        string stringText,
+        string expected = null,
         bool runSubTreeTests = true,
-        bool allowDiagnosticsMismatch = false)
+        bool allowDiagnosticsMismatch = false,
+        bool runReplaceTokens = false)
     {
-        var (tree, sourceText) = TryParseTree(stringText, conversionFailureOk: false,
-            allowDiagnosticsMismatch);
+        var (tree, sourceText) = TryParseTree(
+            stringText,
+            conversionFailureOk: false,
+            allowDiagnosticsMismatch,
+            runReplaceTokens);
 
         // Tests are allowed to not run the subtree tests.  This is because some
         // subtrees can cause the native regex parser to exhibit very bad behavior
         // (like not ever actually finishing compiling).
         if (runSubTreeTests)
         {
-            TryParseSubTrees(stringText, allowDiagnosticsMismatch);
+            TryParseSubTrees(stringText, allowDiagnosticsMismatch, runReplaceTokens);
         }
 
         const string DoubleQuoteEscaping = "\"\"";
@@ -72,20 +79,23 @@ public partial class RoutePatternParserTests
         _outputHelper.WriteLine(actual);
         if (expected != null)
         {
-            //Assert.Equal(expected.Replace("\"", DoubleQuoteEscaping), actual);
+            Assert.Equal(expected.Replace("\"", DoubleQuoteEscaping), actual);
         }
 
         return tree;
     }
 
-    private void TryParseSubTrees(string stringText, bool allowDiagnosticsMismatch)
+    private void TryParseSubTrees(
+        string stringText,
+        bool allowDiagnosticsMismatch,
+        bool runReplaceTokens = false)
     {
         // Trim the input from the right and make sure tree invariants hold
         var current = stringText;
         while (current is not "@\"\"" and not "\"\"")
         {
             current = current.Substring(0, current.Length - 2) + "\"";
-            TryParseTree(current, conversionFailureOk: true, allowDiagnosticsMismatch);
+            TryParseTree(current, conversionFailureOk: true, allowDiagnosticsMismatch, runReplaceTokens);
         }
 
         // Trim the input from the left and make sure tree invariants hold
@@ -101,8 +111,7 @@ public partial class RoutePatternParserTests
                 current = "\"" + current.Substring(2);
             }
 
-            TryParseTree(current, conversionFailureOk: true,
-                allowDiagnosticsMismatch);
+            TryParseTree(current, conversionFailureOk: true, allowDiagnosticsMismatch, runReplaceTokens);
         }
 
         for (var start = stringText[0] == '@' ? 2 : 1; start < stringText.Length - 1; start++)
@@ -111,12 +120,13 @@ public partial class RoutePatternParserTests
                 stringText.Substring(0, start) +
                 stringText.Substring(start + 1, stringText.Length - (start + 1)),
                 conversionFailureOk: true,
-                allowDiagnosticsMismatch);
+                allowDiagnosticsMismatch,
+                runReplaceTokens);
         }
     }
 
     private (SyntaxToken, RoutePatternTree, AspNetCoreVirtualCharSequence) JustParseTree(
-        string stringText, bool conversionFailureOk)
+        string stringText, bool conversionFailureOk, bool runReplaceTokens)
     {
         var token = GetStringToken(stringText);
         var allChars = AspNetCoreCSharpVirtualCharService.Instance.TryConvertToVirtualChars(token);
@@ -126,16 +136,17 @@ public partial class RoutePatternParserTests
             return (token, null, allChars);
         }
 
-        var tree = RoutePatternParser.TryParse(allChars);
+        var tree = RoutePatternParser.TryParse(allChars, supportTokenReplacement: runReplaceTokens);
         return (token, tree, allChars);
     }
 
     private (RoutePatternTree, SourceText) TryParseTree(
         string stringText,
         bool conversionFailureOk,
-        bool allowDiagnosticsMismatch = false)
+        bool allowDiagnosticsMismatch = false,
+        bool runReplaceTokens = false)
     {
-        var (token, tree, allChars) = JustParseTree(stringText, conversionFailureOk);
+        var (token, tree, allChars) = JustParseTree(stringText, conversionFailureOk, runReplaceTokens);
         if (tree == null)
         {
             Assert.True(allChars.IsDefault());
@@ -152,10 +163,20 @@ public partial class RoutePatternParserTests
         {
             routePattern = RoutePatternFactory.Parse(token.ValueText);
             parsedRoutePatterns = routePattern.Parameters;
+
+            if (runReplaceTokens)
+            {
+                AttributeRouteModel.ReplaceTokens(token.ValueText, new Dictionary<string, string>
+                {
+                    ["controller"] = "TestController",
+                    ["action"] = "TestAction"
+                });
+            }
         }
         catch (Exception ex)
         {
-            if (!allowDiagnosticsMismatch)
+            if (!allowDiagnosticsMismatch &&
+                !Regex.IsMatch(ex.Message, "^While processing template '(.*?)', a replacement value for the token '(.*?)' could not be found."))
             {
                 if (tree.Diagnostics.Length == 0)
                 {
@@ -360,8 +381,9 @@ public partial class RoutePatternParserTests
     {
         var conj = $"({regexes[regexes.Length - 1]})";
         for (var i = regexes.Length - 2; i >= 0; i--)
+        {
             conj = $"(?({regexes[i]}){conj}|[0-[0]])";
-
+        }
         return conj;
     }
 

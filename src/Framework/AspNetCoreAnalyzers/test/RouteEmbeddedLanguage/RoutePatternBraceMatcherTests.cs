@@ -136,6 +136,52 @@ class Program
 ");
     }
 
+    [Fact]
+    public async Task BeforeReplacementTokenStart_NotUsedWithMvc_NoHighlight()
+    {
+        // Arrange & Act & Assert
+        await TestBraceMatchesAsync(@"
+using System.Diagnostics.CodeAnalysis;
+
+class Program
+{
+    static void Main()
+    {
+        M(@""$$[aaa]"");
+    }
+
+    static void M([StringSyntax(""Route"")] string p)
+    {
+    }
+}
+");
+    }
+
+    [Fact]
+    public async Task BeforeReplacementTokenStart_MvcAction_HighlightReplacementTokenBrackets()
+    {
+        // Arrange & Act & Assert
+        await TestBraceMatchesAsync(@"
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Mvc;
+
+class Program
+{
+    static void Main()
+    {
+    }
+}
+
+[Route(@""$$[|[|]aaa[|]|]"")]
+public class TestController
+{
+    public void TestAction()
+    {
+    }
+}
+");
+    }
+
     private async Task TestBraceMatchesAsync(string source)
     {
         MarkupTestFile.GetPositionAndSpans(source, out var output, out int cursorPosition, out var spans);
