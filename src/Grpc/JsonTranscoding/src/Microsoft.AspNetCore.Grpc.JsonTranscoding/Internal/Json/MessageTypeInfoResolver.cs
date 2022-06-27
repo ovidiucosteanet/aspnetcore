@@ -7,13 +7,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
-using Google.Protobuf.WellKnownTypes;
 using Grpc.Shared;
 using Type = System.Type;
 
 namespace Microsoft.AspNetCore.Grpc.JsonTranscoding.Internal.Json;
 
-internal sealed class MessageTypeInfoResolver : DefaultJsonTypeInfoResolver
+internal sealed class MessageTypeInfoResolver : IJsonTypeInfoResolver
 {
     private readonly JsonContext _context;
 
@@ -22,33 +21,34 @@ internal sealed class MessageTypeInfoResolver : DefaultJsonTypeInfoResolver
         _context = context;
     }
 
-    public override JsonTypeInfo GetTypeInfo(Type type, JsonSerializerOptions options)
+    public JsonTypeInfo? GetTypeInfo(Type type, JsonSerializerOptions options)
     {
-        var typeInfo = base.GetTypeInfo(type, options);
-
-        if (IsStandardMessage(type, out var messageDescriptor))
+        if (!IsStandardMessage(type, out var messageDescriptor))
         {
-            typeInfo.Properties.Clear();
+            return null;
+        }
 
-            var fields = messageDescriptor.Fields.InFieldNumberOrder();
-            var mappings = CreateJsonFieldMap(fields);
+        var typeInfo = JsonTypeInfo.CreateJsonTypeInfo(type, options);
+        typeInfo.CreateObject = () => Activator.CreateInstance(type)!;
 
-            foreach (var field in fields)
-            {
-                mappings.Remove(field.JsonName);
+        var fields = messageDescriptor.Fields.InFieldNumberOrder();
+        var mappings = CreateJsonFieldMap(fields);
 
-                var propertyInfo = CreatePropertyInfo(typeInfo, field.JsonName, field, isWritable: true);
-                typeInfo.Properties.Add(propertyInfo);
-            }
+        foreach (var field in fields)
+        {
+            mappings.Remove(field.JsonName);
 
-            // Fields have two mappings: the original field name and the camelcased JSON name.
-            // The JSON name can also be customized in proto with json_name option.
-            // Add extra setter only properties for mappings that haven't already been added.
-            foreach (var mapping in mappings)
-            {
-                var propertyInfo = CreatePropertyInfo(typeInfo, mapping.Key, mapping.Value, isWritable: false);
-                typeInfo.Properties.Add(propertyInfo);
-            }
+            var propertyInfo = CreatePropertyInfo(typeInfo, field.JsonName, field, isWritable: true);
+            typeInfo.Properties.Add(propertyInfo);
+        }
+
+        // Fields have two mappings: the original field name and the camelcased JSON name.
+        // The JSON name can also be customized in proto with json_name option.
+        // Add extra setter only properties for mappings that haven't already been added.
+        foreach (var mapping in mappings)
+        {
+            var propertyInfo = CreatePropertyInfo(typeInfo, mapping.Key, mapping.Value, isWritable: false);
+            typeInfo.Properties.Add(propertyInfo);
         }
 
         return typeInfo;

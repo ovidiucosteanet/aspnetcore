@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Google.Protobuf.Reflection;
@@ -36,12 +37,16 @@ internal static class JsonConverterHelper
         // For streaming to work, indenting must be disabled when streaming.
         var writeIndented = !isStreamingOptions ? context.Settings.WriteIndented : false;
 
+        var typeInfoResolver = JsonTypeInfoResolver.Combine(
+            new MessageTypeInfoResolver(context),
+            new DefaultJsonTypeInfoResolver());
+
         var options = new JsonSerializerOptions
         {
             WriteIndented = writeIndented,
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            TypeInfoResolver = new MessageTypeInfoResolver(context)
+            TypeInfoResolver = typeInfoResolver
         };
         options.Converters.Add(new NullValueConverter());
         options.Converters.Add(new ByteStringConverter());
