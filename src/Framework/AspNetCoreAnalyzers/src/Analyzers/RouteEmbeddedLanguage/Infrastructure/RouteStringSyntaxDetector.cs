@@ -5,61 +5,14 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.RoutePattern;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.ExternalAccess.AspNetCore.EmbeddedLanguages;
 
 namespace Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
 
 internal static class RouteStringSyntaxDetector
 {
-    internal static async ValueTask<(bool success, SyntaxToken token, SemanticModel? model)> TryGetStringSyntaxTokenAtPositionAsync(
-        Document document, int position, CancellationToken cancellationToken)
-    {
-        var root = await GetSyntaxRootAsync(document, cancellationToken).ConfigureAwait(false);
-        if (root == null)
-        {
-            return default;
-        }
-        var token = root.FindToken(position);
-
-        var semanticModel = await GetSemanticModelAsync(document, cancellationToken).ConfigureAwait(false);
-        if (semanticModel == null)
-        {
-            return default;
-        }
-
-        if (!IsRouteStringSyntaxToken(token, semanticModel, cancellationToken))
-        {
-            return default;
-        }
-
-        return (true, token, semanticModel);
-    }
-
-    public static async ValueTask<SyntaxNode?> GetSyntaxRootAsync(Document document, CancellationToken cancellationToken)
-    {
-        if (document.TryGetSyntaxRoot(out var root))
-        {
-            return root;
-        }
-
-        return await document.GetSyntaxRootAsync(cancellationToken);
-    }
-
-    public static async ValueTask<SemanticModel?> GetSemanticModelAsync(Document document, CancellationToken cancellationToken)
-    {
-        if (document.TryGetSemanticModel(out var semanticModel))
-        {
-            return semanticModel;
-        }
-
-        return await document.GetSemanticModelAsync(cancellationToken);
-    }
-
     public static bool IsRouteStringSyntaxToken(SyntaxToken token, SemanticModel semanticModel, CancellationToken cancellationToken)
     {
         if (!IsAnyStringLiteral(token.RawKind))

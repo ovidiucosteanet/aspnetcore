@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
@@ -116,9 +117,27 @@ internal static class RoutePatternUsageDetector
             return null;
         }
 
-        // Get the symbol as long if it's not null or if there is only one candidate symbol
-        var method = GetMethodInfo(semanticModel, argumentList.Parent, cancellationToken);
+        // Multiple overloads could be resolved, e.g. MapGet(string, RequestDelegate) and MapGet(string, Delegate)
+        // Check each overload result to see whether it matches and return the first valid result.
+        var symbols = GetBestOrAllSymbols(semanticModel.GetSymbolInfo(argumentList.Parent, cancellationToken));
 
+        foreach (var symbol in symbols)
+        {
+            if (symbol is IMethodSymbol methodSymbol)
+            {
+                var matchingMapSymbol = FindValidMapMethod(semanticModel, argumentList, methodSymbol, cancellationToken);
+                if (matchingMapSymbol != null)
+                {
+                    return matchingMapSymbol;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static IMethodSymbol? FindValidMapMethod(SemanticModel semanticModel, BaseArgumentListSyntax argumentList, IMethodSymbol method, CancellationToken cancellationToken)
+    {
         if (!method.Name.StartsWith("Map", StringComparison.Ordinal))
         {
             return null;
@@ -133,7 +152,9 @@ internal static class RoutePatternUsageDetector
             return null;
         }
 
-        if (!method.Parameters.Any(
+        // IEndpointRouteBuilder may be removed from symbol because the method is called as an extension method.
+        // ReducedFrom includes the original IEndpointRouteBuilder parameter.
+        if (!(method.ReducedFrom ?? method).Parameters.Any(
             a => SymbolEqualityComparer.Default.Equals(a.Type, endpointRouteBuilderSymbol) ||
                 a.Type.Implements(endpointRouteBuilderSymbol)))
         {
@@ -161,5 +182,19 @@ internal static class RoutePatternUsageDetector
         }
 
         return delegateSymbol as IMethodSymbol;
+    }
+
+    private static ImmutableArray<ISymbol> GetBestOrAllSymbols(SymbolInfo info)
+    {
+        if (info.Symbol != null)
+        {
+            return ImmutableArray.Create(info.Symbol);
+        }
+        else if (info.CandidateSymbols.Length > 0)
+        {
+            return info.CandidateSymbols;
+        }
+
+        return ImmutableArray<ISymbol>.Empty;
     }
 }

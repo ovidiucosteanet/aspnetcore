@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage.Infrastructure;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.CodeAnalysis.ExternalAccess.AspNetCore.EmbeddedLanguages;
 
 namespace Microsoft.AspNetCore.Analyzers.RouteEmbeddedLanguage;
@@ -137,7 +139,109 @@ class Program
     }
 
     [Fact]
-    public async Task InParameterName_MatchingDelegate_NoHighlight()
+    public async Task InParameterName_ExtensionMethod_MatchingDelegate_HighlightParameter()
+    {
+        // Arrange & Act & Assert
+        await TestHighlightingAsync(@"
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+
+class Program
+{
+    static void Main()
+    {
+        IEndpointRouteBuilder builder = null;
+        builder.MapGet(@""{$$[|id|]}"", (string [|id|]) => $""{[|id|]}"");
+    }
+}
+");
+    }
+
+    [Fact]
+    public async Task InParameterName_MatchingDelegate_HighlightParameter()
+    {
+        // Arrange & Act & Assert
+        await TestHighlightingAsync(@"
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Builder;
+
+class Program
+{
+    static void Main()
+    {
+        EndpointRouteBuilderExtensions.MapGet(null, @""{$$[|id|]}"", (string [|id|]) => $""{[|id|]}"");
+    }
+}
+");
+    }
+
+    [Fact]
+    public async Task InParameterName_MatchingDelegate_AsParameters_HighlightProperty()
+    {
+        // Arrange & Act & Assert
+        await TestHighlightingAsync(@"
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+
+class Program
+{
+    static void Main()
+    {
+        EndpointRouteBuilderExtensions.MapGet(null, @""{$$[|pageIndex|]}"", ([AsParameters] PageData pageData) => $""{pageData.[|PageIndex|]}"");
+    }
+
+    int OtherMethod(PageData pageData)
+    {
+        return pageData.PageIndex;
+    }
+}
+
+public class PageData
+{
+    public int PageNumber { get; set; }
+    public int PageIndex { get; set; }
+}
+");
+    }
+
+    [Fact]
+    public async Task InParameterName_MatchingDelegate_AsParameters_DontHighlightArgument()
+    {
+        // Arrange & Act & Assert
+        await TestHighlightingAsync(@"
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+
+class Program
+{
+    static void Main()
+    {
+        EndpointRouteBuilderExtensions.MapGet(null, @""{$$[|pageData|]}"", ([AsParameters] PageData pageData) => $""{pageData.PageIndex}"");
+    }
+
+    int OtherMethod(PageData pageData)
+    {
+        return pageData.PageIndex;
+    }
+}
+
+public class PageData
+{
+    public int PageNumber { get; set; }
+    public int PageIndex { get; set; }
+}
+");
+    }
+
+    [Fact]
+    public async Task InParameterName_MatchingMethod_HighlightParameter()
     {
         // Arrange & Act & Assert
         await TestHighlightingAsync(@"

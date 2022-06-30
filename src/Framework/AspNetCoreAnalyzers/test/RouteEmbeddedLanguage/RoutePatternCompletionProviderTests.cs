@@ -274,6 +274,28 @@ class Program
     }
 
     [Fact]
+    public async Task Insertion_ParameterOpenBrace_EndpointMapGet_Incomplete_NoResults()
+    {
+        // Arrange & Act
+        var result = await GetCompletionsAndServiceAsync(@"
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Builder;
+
+class Program
+{
+    static void Main()
+    {
+        EndpointRouteBuilderExtensions.MapGet(null, @""{$$"";
+    }
+}
+");
+
+        // Assert
+        Assert.Empty(result.Completions.Items);
+    }
+
+    [Fact]
     public async Task Insertion_ParameterOpenBrace_CustomMapGet_ReturnDelegateParameterItem()
     {
         // Arrange & Act
