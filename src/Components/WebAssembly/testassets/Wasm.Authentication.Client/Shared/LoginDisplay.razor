@@ -1,6 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
-@inject SignOutSessionStateManager SignOutManager
 
 <AuthorizeView Context="authenticationState">
     <Authorized>
@@ -13,10 +12,9 @@
     </NotAuthorized>
 </AuthorizeView>
 
-@code{
-    public async Task BeginSignOut()
+@code {
+    public void BeginSignOut()
     {
-        await SignOutManager.SetSignOutState();
-        Navigation.NavigateTo("authentication/logout");
+        Navigation.NavigateToLogout("authentication/logout");
     }
 }

@@ -14,9 +14,11 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 /// <typeparam name="TAuthenticationState">The user state type persisted while the operation is in progress. It must be serializable.</typeparam>
 public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSerialized)] TAuthenticationState> : ComponentBase where TAuthenticationState : RemoteAuthenticationState
 {
-    private string _message;
     private RemoteAuthenticationApplicationPathsOptions _applicationPaths;
     private string _action;
+
+    private static readonly NavigationOptions AuthenticationNavigationOptions =
+        new() { ForceLoad = false, ReplaceHistoryEntry = true };
 
     /// <summary>
     /// Gets or sets the <see cref="RemoteAuthenticationActions"/> action the component needs to handle.
@@ -106,7 +108,9 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
     /// <summary>
     /// Gets or sets a default <see cref="AuthenticationStateProvider"/> with the current user.
     /// </summary>
+#pragma warning disable CS0618 // Type or member is obsolete
     [Inject] internal SignOutSessionStateManager SignOutManager { get; set; }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     /// <summary>
     /// Gets or sets the <see cref="RemoteAuthenticationApplicationPathsOptions"/> with the paths to different authentication pages.
@@ -137,7 +141,7 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
                 builder.AddContent(0, CompletingLoggingIn);
                 break;
             case RemoteAuthenticationActions.LogInFailed:
-                builder.AddContent(0, LogInFailed(_message));
+                builder.AddContent(0, LogInFailed(Navigation.State));
                 break;
             case RemoteAuthenticationActions.LogOut:
                 builder.AddContent(0, LogOut);
@@ -146,7 +150,7 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
                 builder.AddContent(0, CompletingLogOut);
                 break;
             case RemoteAuthenticationActions.LogOutFailed:
-                builder.AddContent(0, LogOutFailed(_message));
+                builder.AddContent(0, LogOutFailed(Navigation.State));
                 break;
             case RemoteAuthenticationActions.LogOutSucceeded:
                 builder.AddContent(0, LogOutSucceeded);
@@ -220,11 +224,10 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
                 break;
             case RemoteAuthenticationStatus.Success:
                 await OnLogInSucceeded.InvokeAsync(result.State);
-                NavigateToReturnUrl(GetReturnUrl(result.State, returnUrl));
+                Navigation.NavigateTo(GetReturnUrl(result.State, returnUrl), AuthenticationNavigationOptions);
                 break;
             case RemoteAuthenticationStatus.Failure:
-                _message = result.ErrorMessage;
-                Navigation.NavigateTo(ApplicationPaths.LogInFailedPath);
+                Navigation.NavigateTo(ApplicationPaths.LogInFailedPath, AuthenticationNavigationOptions);
                 break;
             case RemoteAuthenticationStatus.OperationCompleted:
             default:
@@ -244,13 +247,13 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
                 throw new InvalidOperationException("Should not redirect.");
             case RemoteAuthenticationStatus.Success:
                 await OnLogInSucceeded.InvokeAsync(result.State);
-                NavigateToReturnUrl(GetReturnUrl(result.State));
+                Navigation.NavigateTo(GetReturnUrl(result.State), AuthenticationNavigationOptions);
                 break;
             case RemoteAuthenticationStatus.OperationCompleted:
                 break;
             case RemoteAuthenticationStatus.Failure:
-                var uri = Navigation.ToAbsoluteUri($"{ApplicationPaths.LogInFailedPath}?message={Uri.EscapeDataString(result.ErrorMessage)}").ToString();
-                NavigateToReturnUrl(uri);
+                Navigation.NavigateTo(ApplicationPaths.LogInFailedPath,
+                    AuthenticationNavigationOptions with { State = result.ErrorMessage });
                 break;
             default:
                 throw new InvalidOperationException($"Invalid authentication result status '{result.Status}'.");
@@ -259,10 +262,18 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
 
     private async Task ProcessLogOut(string returnUrl)
     {
-        if (!await SignOutManager.ValidateSignOutState())
+        // We keep around SignOutManager for backwards compatibility with existing apps, but we
+        // are obsoleting that mechanism in favor of using the history API.
+        if ((Navigation.State != null && !string.Equals(Navigation.State, NavigationManagerExtensions.LogoutNavigationState, StringComparison.Ordinal) ||
+            Navigation.State == null && !await SignOutManager.ValidateSignOutState()))
         {
-            var uri = $"{Navigation.ToAbsoluteUri(ApplicationPaths.LogOutFailedPath)}?message={Uri.EscapeDataString("The logout was not initiated from within the page.")}";
-            Navigation.NavigateTo(uri);
+            var errorMessage = "The logout was not initiated from within the page.";
+            Navigation.NavigateTo(
+                ApplicationPaths.LogOutFailedPath,
+                AuthenticationNavigationOptions with
+                {
+                    State = errorMessage
+                });
 
             return;
         }
@@ -280,13 +291,12 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
                     break;
                 case RemoteAuthenticationStatus.Success:
                     await OnLogOutSucceeded.InvokeAsync(result.State);
-                    NavigateToReturnUrl(returnUrl);
+                    Navigation.NavigateTo(returnUrl, AuthenticationNavigationOptions);
                     break;
                 case RemoteAuthenticationStatus.OperationCompleted:
                     break;
                 case RemoteAuthenticationStatus.Failure:
-                    _message = result.ErrorMessage;
-                    Navigation.NavigateTo(ApplicationPaths.LogOutFailedPath);
+                    Navigation.NavigateTo(ApplicationPaths.LogOutFailedPath, AuthenticationNavigationOptions with { State = result.ErrorMessage });
                     break;
                 default:
                     throw new InvalidOperationException($"Invalid authentication result status.");
@@ -294,7 +304,7 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
         }
         else
         {
-            NavigateToReturnUrl(returnUrl);
+            Navigation.NavigateTo(returnUrl, AuthenticationNavigationOptions);
         }
     }
 
@@ -309,13 +319,17 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
                 throw new InvalidOperationException("Should not redirect.");
             case RemoteAuthenticationStatus.Success:
                 await OnLogOutSucceeded.InvokeAsync(result.State);
-                NavigateToReturnUrl(GetReturnUrl(result.State, Navigation.ToAbsoluteUri(ApplicationPaths.LogOutSucceededPath).ToString()));
+                Navigation.NavigateTo(
+                    GetReturnUrl(result.State, Navigation.ToAbsoluteUri(ApplicationPaths.LogOutSucceededPath).ToString()),
+                    AuthenticationNavigationOptions);
+
                 break;
             case RemoteAuthenticationStatus.OperationCompleted:
                 break;
             case RemoteAuthenticationStatus.Failure:
-                var uri = Navigation.ToAbsoluteUri($"{ApplicationPaths.LogOutFailedPath}?message={Uri.EscapeDataString(result.ErrorMessage)}").ToString();
-                NavigateToReturnUrl(uri);
+                Navigation.NavigateTo(
+                    ApplicationPaths.LogOutFailedPath,
+                    AuthenticationNavigationOptions with { State = result.ErrorMessage });
                 break;
             default:
                 throw new InvalidOperationException($"Invalid authentication result status.");
@@ -339,18 +353,18 @@ public class RemoteAuthenticatorViewCore<[DynamicallyAccessedMembers(JsonSeriali
         return fromQuery ?? defaultReturnUrl ?? Navigation.BaseUri;
     }
 
-    private void NavigateToReturnUrl(string returnUrl) => Navigation.NavigateTo(returnUrl, new NavigationOptions { ForceLoad = false, ReplaceHistoryEntry = true });
-
     private void RedirectToRegister()
     {
         var loginUrl = Navigation.ToAbsoluteUri(ApplicationPaths.LogInPath).PathAndQuery;
         var registerUrl = Navigation.ToAbsoluteUri($"{ApplicationPaths.RemoteRegisterPath}?returnUrl={Uri.EscapeDataString(loginUrl)}").PathAndQuery;
 
-        Navigation.NavigateTo(registerUrl, new NavigationOptions { ReplaceHistoryEntry = true, ForceLoad = true });
+        Navigation.NavigateTo(registerUrl, AuthenticationNavigationOptions with { ForceLoad = true });
     }
 
     private void RedirectToProfile() =>
-        Navigation.NavigateTo(Navigation.ToAbsoluteUri(ApplicationPaths.RemoteProfilePath).PathAndQuery, new NavigationOptions { ReplaceHistoryEntry = true, ForceLoad = true });
+        Navigation.NavigateTo(
+            Navigation.ToAbsoluteUri(ApplicationPaths.RemoteProfilePath).PathAndQuery,
+            AuthenticationNavigationOptions with { ForceLoad = true });
 
     private static void DefaultLogInFragment(RenderTreeBuilder builder)
     {

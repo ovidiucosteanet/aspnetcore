@@ -38,6 +38,8 @@ public abstract class NavigationManager
     // The URI. Always represented an absolute URI.
     private string? _uri;
 
+    private string? _state;
+
     private bool _isInitialized;
 
     /// <summary>
@@ -84,6 +86,11 @@ public abstract class NavigationManager
             _uri = value;
         }
     }
+
+    /// <summary>
+    /// Gets the state associated with the current navigation.
+    /// </summary>
+    public string? State => _state;
 
     /// <summary>
     /// Navigates to the specified URI.
@@ -252,9 +259,18 @@ public abstract class NavigationManager
     /// </summary>
     protected void NotifyLocationChanged(bool isInterceptedLink)
     {
+        NotifyLocationChanged(null, isInterceptedLink);
+    }
+
+    /// <summary>
+    /// Triggers the <see cref="LocationChanged"/> event with the current URI value.
+    /// </summary>
+    protected void NotifyLocationChanged(string? state, bool isInterceptedLink)
+    {
         try
         {
-            _locationChanged?.Invoke(this, new LocationChangedEventArgs(_uri!, isInterceptedLink));
+            _state = state;
+            _locationChanged?.Invoke(this, new LocationChangedEventArgs(_uri!, state, isInterceptedLink));
         }
         catch (Exception ex)
         {
