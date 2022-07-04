@@ -63,7 +63,7 @@ internal abstract class ActionMethodExecutor
         throw new Exception();
     }
 
-    private class ExecuteActionWithRouteHandlerFilterDelegate : ActionMethodExecutor
+    private sealed class ExecuteActionWithRouteHandlerFilterDelegate : ActionMethodExecutor
     {
         private readonly RouteHandlerFilterDelegate _filterDelegate;
 
