@@ -15,7 +15,10 @@ public sealed class RouteEndpointBuilder : EndpointBuilder
 {
     // TODO: Make this public as a gettable IReadOnlyList<Func<RouteHandlerContext, RouteHandlerFilterDelegate, RouteHandlerFilterDelegate>>.
     // AddRouteHandlerFilter will still be the only way to mutate this list.
-    internal List<Func<RouteHandlerContext, RouteHandlerFilterDelegate, RouteHandlerFilterDelegate>>? RouteHandlerFilterFactories { get; set; }
+    /// <summary>
+    /// List of filters
+    /// </summary>
+    public List<Func<RouteHandlerContext, RouteHandlerFilterDelegate, RouteHandlerFilterDelegate>>? RouteHandlerFilterFactories { get; set; }
 
     /// <summary>
     /// Gets or sets the <see cref="RoutePattern"/> associated with this endpoint.

@@ -4,6 +4,7 @@
 #nullable enable
 
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -68,7 +69,7 @@ internal sealed class ControllerActionInvokerCache
                 actionDescriptor,
                 _mvcOptions);
 
-            var actionMethodExecutor = ActionMethodExecutor.GetExecutor(objectMethodExecutor);
+            var actionMethodExecutor = ActionMethodExecutor.GetExecutor(actionDescriptor, objectMethodExecutor);
 
             cacheEntry = new ControllerActionInvokerCacheEntry(
                 filterFactoryResult.CacheableFilters,

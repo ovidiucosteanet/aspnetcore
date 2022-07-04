@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.AspNetCore.Mvc.Controllers;
+
 namespace MvcSandbox;
 
 public class Startup
@@ -24,7 +26,13 @@ public class Startup
         {
             endpoints.MapGet("/MapGet", () => "MapGet");
 
-            endpoints.MapControllers();
+            endpoints.MapControllers().AddRouteHandlerFilter((context, next) =>
+            {
+                var mi = context.MethodInfo;
+
+                return ic => next(ic);
+            });
+
             endpoints.MapControllerRoute(
                 Guid.NewGuid().ToString(),
                 "{controller=Home}/{action=Index}/{id?}");

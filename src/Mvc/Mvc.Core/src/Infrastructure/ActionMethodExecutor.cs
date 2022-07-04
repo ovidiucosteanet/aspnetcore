@@ -4,6 +4,8 @@
 #nullable enable
 
 using System.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Core;
 using Microsoft.Extensions.Internal;
 
@@ -27,12 +29,25 @@ internal abstract class ActionMethodExecutor
     };
 
     public abstract ValueTask<IActionResult> Execute(
+        ActionContext actionContext,
         IActionResultTypeMapper mapper,
         ObjectMethodExecutor executor,
         object controller,
         object?[]? arguments);
 
     protected abstract bool CanExecute(ObjectMethodExecutor executor);
+
+    public static ActionMethodExecutor GetExecutor(ControllerActionDescriptor actionDescriptor, ObjectMethodExecutor executor)
+    {
+        if (actionDescriptor.FilterDelegate is not null)
+        {
+            return new ExecuteActionWithRouteHandlerFilterDelegate(actionDescriptor.FilterDelegate);
+        }
+        else
+        {
+            return GetExecutor(executor);
+        }
+    }
 
     public static ActionMethodExecutor GetExecutor(ObjectMethodExecutor executor)
     {
@@ -48,10 +63,39 @@ internal abstract class ActionMethodExecutor
         throw new Exception();
     }
 
+    private class ExecuteActionWithRouteHandlerFilterDelegate : ActionMethodExecutor
+    {
+        private readonly RouteHandlerFilterDelegate _filterDelegate;
+
+        public ExecuteActionWithRouteHandlerFilterDelegate(RouteHandlerFilterDelegate filterDelegate)
+        {
+            _filterDelegate = filterDelegate;
+        }
+
+        public override async ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
+            IActionResultTypeMapper mapper,
+            ObjectMethodExecutor executor,
+            object controller,
+            object?[]? arguments)
+        {
+            var context = new ControllerRouteHandlerInvocationContext(actionContext.HttpContext, executor, controller, arguments);
+            var result = await _filterDelegate(context);
+            return ConvertToActionResult(mapper, result, executor.MethodReturnType);
+        }
+
+        protected override bool CanExecute(ObjectMethodExecutor executor)
+        {
+            // This is never called
+            throw new NotImplementedException();
+        }
+    }
+
     // void LogMessage(..)
     private sealed class VoidResultExecutor : ActionMethodExecutor
     {
         public override ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -70,6 +114,7 @@ internal abstract class ActionMethodExecutor
     private sealed class SyncActionResultExecutor : ActionMethodExecutor
     {
         public override ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -90,6 +135,7 @@ internal abstract class ActionMethodExecutor
     private sealed class SyncObjectResultExecutor : ActionMethodExecutor
     {
         public override ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -109,6 +155,7 @@ internal abstract class ActionMethodExecutor
     private sealed class TaskResultExecutor : ActionMethodExecutor
     {
         public override async ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -126,6 +173,7 @@ internal abstract class ActionMethodExecutor
     private sealed class AwaitableResultExecutor : ActionMethodExecutor
     {
         public override async ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -146,6 +194,7 @@ internal abstract class ActionMethodExecutor
     private sealed class TaskOfIActionResultExecutor : ActionMethodExecutor
     {
         public override async ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -169,6 +218,7 @@ internal abstract class ActionMethodExecutor
     private sealed class TaskOfActionResultExecutor : ActionMethodExecutor
     {
         public override async ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,
@@ -193,6 +243,7 @@ internal abstract class ActionMethodExecutor
     private sealed class AwaitableObjectResultExecutor : ActionMethodExecutor
     {
         public override async ValueTask<IActionResult> Execute(
+            ActionContext actionContext,
             IActionResultTypeMapper mapper,
             ObjectMethodExecutor executor,
             object controller,

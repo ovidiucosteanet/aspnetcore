@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Internal;
 
 namespace Microsoft.AspNetCore.Mvc.Routing;
 
@@ -20,8 +22,11 @@ internal sealed class ActionEndpointFactory
     private readonly RoutePatternTransformer _routePatternTransformer;
     private readonly RequestDelegate _requestDelegate;
     private readonly IRequestDelegateFactory[] _requestDelegateFactories;
+    private readonly IServiceProvider _serviceProvider;
 
-    public ActionEndpointFactory(RoutePatternTransformer routePatternTransformer, IEnumerable<IRequestDelegateFactory> requestDelegateFactories)
+    public ActionEndpointFactory(RoutePatternTransformer routePatternTransformer,
+                                IEnumerable<IRequestDelegateFactory> requestDelegateFactories,
+                                IServiceProvider serviceProvider)
     {
         if (routePatternTransformer == null)
         {
@@ -31,6 +36,7 @@ internal sealed class ActionEndpointFactory
         _routePatternTransformer = routePatternTransformer;
         _requestDelegate = CreateRequestDelegate();
         _requestDelegateFactories = requestDelegateFactories.ToArray();
+        _serviceProvider = serviceProvider;
     }
 
     public void AddEndpoints(
@@ -216,9 +222,9 @@ internal sealed class ActionEndpointFactory
         {
             DisplayName = "Route: " + route.Pattern.RawText,
             Metadata =
-                {
-                    new SuppressMatchingMetadata(),
-                },
+            {
+                new SuppressMatchingMetadata(),
+            },
         };
 
         if (route.RouteName != null)
@@ -245,6 +251,8 @@ internal sealed class ActionEndpointFactory
         {
             route.Conventions[i](builder);
         }
+
+        builder.RouteHandlerFilterFactories = null;
 
         endpoints.Add((RouteEndpoint)builder.Build());
     }
@@ -301,7 +309,7 @@ internal sealed class ActionEndpointFactory
         return (attributeRoutePattern, resolvedRequiredValues ?? action.RouteValues);
     }
 
-    private static void AddActionDataToBuilder(
+    private void AddActionDataToBuilder(
         EndpointBuilder builder,
         HashSet<string> routeNames,
         ActionDescriptor action,
@@ -405,6 +413,35 @@ internal sealed class ActionEndpointFactory
         for (var i = 0; i < perRouteConventions.Count; i++)
         {
             perRouteConventions[i](builder);
+        }
+
+        if (builder is RouteEndpointBuilder { RouteHandlerFilterFactories.Count: > 0 } reb && action is ControllerActionDescriptor cad)
+        {
+            var routeHandlerFilters = reb.RouteHandlerFilterFactories;
+
+            // Make them null to avoid the default behavior
+            reb.RouteHandlerFilterFactories = null;
+
+            var context = new RouteHandlerContext(cad.MethodInfo, builder.Metadata, _serviceProvider);
+
+            // Most inner delegate needs a ControllerRouteHandlerInvocationContext to function
+            RouteHandlerFilterDelegate del = static async (context) =>
+            {
+                var controllerRhiContext = (ControllerRouteHandlerInvocationContext)context;
+                if (controllerRhiContext.Executor.IsMethodAsync)
+                {
+                    return await controllerRhiContext.Executor.ExecuteAsync(controllerRhiContext.Controller, (object[])controllerRhiContext.Arguments);
+                }
+                return controllerRhiContext.Executor.Execute(controllerRhiContext.Controller, (object[])controllerRhiContext.Arguments);
+            };
+
+            for (var i = routeHandlerFilters.Count - 1; i >= 0; i--)
+            {
+                var filterFactory = routeHandlerFilters[i];
+                del = filterFactory(context, del);
+            }
+
+            cad.FilterDelegate = del;
         }
     }
 
