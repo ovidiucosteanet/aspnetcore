@@ -37,7 +37,7 @@ function base64EncodeByteArray(data: Uint8Array) {
 }
 
 export function sendLocationChanged(uri: string, state: string | undefined, intercepted: boolean): Promise<void> {
-  send('OnLocationChanged', uri, history.state, intercepted);
+  send('OnLocationChanged', uri, state, intercepted);
   return Promise.resolve(); // Like in Blazor Server, we only issue the notification here - there's no need to wait for a response
 }
 
