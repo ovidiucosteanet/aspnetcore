@@ -1,6 +1,7 @@
 #nullable enable
 Microsoft.AspNetCore.Components.NavigationManager.NotifyLocationChanged(string? state, bool isInterceptedLink) -> void
 Microsoft.AspNetCore.Components.NavigationManager.State.get -> string?
+Microsoft.AspNetCore.Components.NavigationManager.State.set -> void
 Microsoft.AspNetCore.Components.NavigationOptions.State.get -> string?
 Microsoft.AspNetCore.Components.NavigationOptions.State.init -> void
 Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder.AddContent(int sequence, Microsoft.AspNetCore.Components.MarkupString? markupContent) -> void
